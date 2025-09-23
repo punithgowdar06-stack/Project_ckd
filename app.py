@@ -6,7 +6,7 @@ import joblib
 st.title("🩺 Chronic Kidney Disease Prediction")
 
 # Load models
-scaler = joblib.load("models/scaler.pkl")
+scaler = joblib.load("scaler.pkl")
 models = {
     "Logistic Regression": joblib.load("logistic.pkl"),
     "Random Forest": joblib.load("randomforest.pkl"),
