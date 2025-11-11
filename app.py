@@ -43,11 +43,11 @@ if check_password():
     try:
         scaler = joblib.load("models/scaler.pkl")
         models = {
-            "Logistic Regression": joblib.load("models/logistic.pkl"),
-            "Random Forest": joblib.load("models/randomforest.pkl"),
-            "SVM": joblib.load("models/svm.pkl"),
-            "KNN": joblib.load("models/knn.pkl"),
-            "Naive Bayes": joblib.load("models/naivebayes.pkl")
+            "Logistic Regression": joblib.load("logistic.pkl"),
+            "Random Forest": joblib.load("randomforest.pkl"),
+            "SVM": joblib.load("svm.pkl"),
+            "KNN": joblib.load("knn.pkl"),
+            "Naive Bayes": joblib.load("naivebayes.pkl")
         }
     except FileNotFoundError:
         st.error("Error: Model files not found. Make sure the 'models' directory and its contents are in the correct location.")
