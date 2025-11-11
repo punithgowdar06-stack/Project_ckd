@@ -1,30 +1,20 @@
-
 import streamlit as st
-import numpy as np
 import pandas as pd
 import joblib
 import os
 
 # ================================
+# Load models
 # ================================
-# Main App Navigation
-# ================================
-st.sidebar.title("Navigation")
+scaler = joblib.load("scaler.pkl")
+models = {
+    "Logistic Regression": joblib.load("logistic.pkl"),
+    "Random Forest": joblib.load("randomforest.pkl"),
+    "SVM": joblib.load("svm.pkl"),
+    "KNN": joblib.load("knn.pkl"),
+    "Naive Bayes": joblib.load("naivebayes.pkl")
+}
 
-if not st.session_state.logged_in:
-    page = st.sidebar.radio("Go to", ["Login", "Sign Up"])
-    if page == "Login":
-        login_page()
-    else:
-        signup_page()
-else:
-    page = st.sidebar.radio("Go to", ["🏠 Home", " Kidney Disease", "Logout"])
-    if page == "🏠 Home":
-     st.title(f"Welcome {st.session_state.username} 🎉")
-     st.write("Select a disease prediction module from the sidebar.")
-    elif page == "Logout":
-     logout_button()
- st.title("🩺 Chronic Kidney Disease Prediction")
 # ================================
 # User authentication data
 # ================================
@@ -61,15 +51,14 @@ def login_page():
             st.success("✅ Login successful!")
         else:
             st.error("❌ Wrong username or password!")
-            
-scaler = joblib.load("scaler.pkl")
-models = {
-    "Logistic Regression": joblib.load("logistic.pkl"),
-    "Random Forest": joblib.load("randomforest.pkl"),
-    "SVM": joblib.load("svm.pkl"),
-    "KNN": joblib.load("knn.pkl"),
-    "Naive Bayes": joblib.load("naivebayes.pkl")
-}
+
+def logout_button():
+    if st.button("Logout"):
+        st.session_state.logged_in = False
+        st.session_state.username = None
+        st.success("👋 Logged out successfully!")
+        
+st.title("🩺 Chronic Kidney Disease Prediction")
 
 # Input form
 st.subheader("Enter Patient Data")
@@ -100,12 +89,25 @@ if st.button("Predict"):
     result = "CKD Detected" if prediction == 1 else "No CKD"
     st.success(f"Prediction: {result}")
 
+# ================================
+# Main App Navigation
+# ================================
+st.sidebar.title("Navigation")
 
-def logout_button():
-    if st.button("Logout"):
-        st.session_state.logged_in = False
-        st.session_state.username = None
-        st.success("👋 Logged out successfully!")
+if not st.session_state.logged_in:
+    page = st.sidebar.radio("Go to", ["Login", "Sign Up"])
+    if page == "Login":
+        login_page()
+    else:
+        signup_page()
+else:
+    page = st.sidebar.radio("Go to", ["🏠 Home", "🫀 Heart Disease", "🫁 Lung Disease", "Logout"])
+    if page == "🏠 Home":
+        st.title(f"Welcome {st.session_state.username} 🎉")
+        st.write("Select a disease prediction module from the sidebar.")
+    
+    elif page == "Logout":
+        logout_button()
 
 
 
