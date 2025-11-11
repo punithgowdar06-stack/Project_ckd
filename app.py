@@ -103,13 +103,7 @@ if not st.session_state.logged_in:
     else:
         signup_page()
 else:
-    page = st.sidebar.radio("Go to", ["🏠 Home", "🫀 Heart Disease", "🫁 Lung Disease", "Logout"])
+    page = st.sidebar.radio("Go to", ["🏠 Home", " Kidney Disease", "Logout"])
     if page == "🏠 Home":
-        st.title(f"Welcome {st.session_state.username} 🎉")
-        st.write("Select a disease prediction module from the sidebar.")
-    elif page == "🫀 Heart Disease":
-        heart_disease_page()
-    elif page == "🫁 Lung Disease":
-        lung_disease_page()
     elif page == "Logout":
         logout_button()
