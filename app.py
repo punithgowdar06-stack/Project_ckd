@@ -15,6 +15,27 @@ models = {
     "KNN": joblib.load("knn.pkl"),
     "Naive Bayes": joblib.load("naivebayes.pkl")
 }
+# ================================
+# File to store user data
+# ================================
+USER_FILE = "users.json"
+
+# ================================
+# Load / Save User Functions
+# ================================
+def load_users():
+    if os.path.exists(USER_FILE):
+        with open(USER_FILE, "r") as f:
+            return json.load(f)
+    else:
+        return {}
+
+def save_users(users):
+    with open(USER_FILE, "w") as f:
+        json.dump(users, f)
+
+# Load users on start
+users = load_users()
 
 # ================================
 # Session State Initialization
