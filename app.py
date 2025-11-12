@@ -1,8 +1,8 @@
 import streamlit as st
 import numpy as np
-import pandas as pd
 import joblib
 import os
+import json
 
 # ================================
 # Load Models
@@ -17,45 +17,72 @@ models = {
 }
 
 # ================================
+# File to store user data
+# ================================
+USER_FILE = "users.json"
+
+# ================================
+# Load / Save User Functions
+# ================================
+def load_users():
+    if os.path.exists(USER_FILE):
+        with open(USER_FILE, "r") as f:
+            return json.load(f)
+    else:
+        return {}
+
+def save_users(users):
+    with open(USER_FILE, "w") as f:
+        json.dump(users, f)
+
+# Load users on start
+users = load_users()
+
+# ================================
 # Session State Initialization
 # ================================
-if "users" not in st.session_state:
-    st.session_state.users = {}  # {username: password}
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "username" not in st.session_state:
     st.session_state.username = None
 
 # ================================
-# Helper Functions
+# Sign Up Page
 # ================================
 def signup_page():
-    st.title("🆕 Sign Up")
-    username = st.text_input("Create Username")
+    st.title("🆕 Create Your Account")
+    email = st.text_input("Enter your Email ID")
     password = st.text_input("Create Password", type="password")
 
     if st.button("Sign Up"):
-        if username in st.session_state.users:
-            st.error("❌ Username already exists! Please choose another.")
-        elif username == "" or password == "":
+        if email == "" or password == "":
             st.warning("⚠️ Please fill all fields.")
+        elif email in users:
+            st.warning("⚠️ Account already exists! Please login.")
         else:
-            st.session_state.users[username] = password
+            users[email] = password
+            save_users(users)
             st.success("✅ Account created successfully! Please go to Login page.")
 
+# ================================
+# Login Page
+# ================================
 def login_page():
     st.title("🔐 Login Page")
-    username = st.text_input("Username")
+    email = st.text_input("Email ID")
     password = st.text_input("Password", type="password")
 
     if st.button("Login"):
-        if username in st.session_state.users and st.session_state.users[username] == password:
+        if email in users and users[email] == password:
             st.session_state.logged_in = True
-            st.session_state.username = username
+            st.session_state.username = email
             st.success("✅ Login successful!")
         else:
-            st.error("❌ Wrong username or password!")
+            st.error("❌ Invalid Email or Password!")
 
+# ================================
+# Logout Button
+# ================================
 def logout_button():
     if st.button("Logout"):
         st.session_state.logged_in = False
@@ -63,54 +90,66 @@ def logout_button():
         st.success("👋 Logged out successfully!")
 
 # ================================
-# Main Application Logic
+# Main App
 # ================================
 st.sidebar.title("Navigation")
 
 if not st.session_state.logged_in:
     page = st.sidebar.radio("Go to", ["Login", "Sign Up"])
-
     if page == "Login":
         login_page()
     else:
         signup_page()
 
 else:
-    # ================================
-    # Logged-In Home (CKD Prediction)
-    # ================================
-    st.title("🩺 Chronic Kidney Disease Prediction")
+    st.title("🩺 Chronic Kidney Disease Prediction System")
     st.subheader(f"Welcome, {st.session_state.username} 🎉")
+    st.write("Enter patient details carefully to predict CKD condition.")
 
-    st.write("### Enter Patient Data Below")
+    st.markdown("### 🧍 Demographic Details")
+    age = st.number_input("Age (years)", 1, 100, help="Enter patient's age (1–100 years)")
 
-    # Input form
-    age = st.number_input("Age", 1, 100)
-    bp = st.number_input("Blood Pressure", 50, 200)
-    sg = st.number_input("Specific Gravity", 1.0, 1.025)
-    al = st.number_input("Albumin", 0, 5)
-    su = st.number_input("Sugar", 0, 5)
-    bgr = st.number_input("Blood Glucose Random", 50, 500)
-    sc = st.number_input("Serum Creatinine", 0.1, 15.0)
-    sod = st.number_input("Sodium", 100, 200)
-    pot = st.number_input("Potassium", 2.0, 10.0)
-    hemo = st.number_input("Hemoglobin", 3.0, 17.0)
-    pcv = st.number_input("Packed Cell Volume", 20, 60)
-    wc = st.number_input("White Blood Cell Count", 2000, 30000)
+    st.markdown("### 💓 Vital Signs")
+    bp = st.number_input("Blood Pressure (mmHg)", 50, 200, help="Normal: 90–120 (Systolic) / 60–80 (Diastolic)")
 
+    st.markdown("### 🧫 Urine Test Parameters")
+    sg = st.number_input("Specific Gravity", 1.000, 1.040, step=0.001,
+                         help="Normal: 1.005–1.030 (indicates urine concentration)")
+    al = st.number_input("Albumin (g/dL)", 0, 5,
+                         help="Normal: 0–1; High (>2) indicates kidney damage")
+    su = st.number_input("Sugar (Urine Glucose Level)", 0, 5,
+                         help="Urine sugar levels: 0=None (Normal), 1=Trace, 2=+, 3=++, 4=+++, 5=++++ (High levels indicate diabetes risk)")
+
+    st.markdown("### 💉 Blood Test Parameters")
+    bgr = st.number_input("Blood Glucose Random (mg/dL)", 50, 500,
+                          help="Normal: 70–140 mg/dL; >200 mg/dL suggests diabetes")
+    sc = st.number_input("Serum Creatinine (mg/dL)", 0.1, 15.0,
+                         help="Normal: 0.6–1.2 mg/dL; High indicates kidney dysfunction")
+    sod = st.number_input("Sodium (mEq/L)", 100, 200,
+                          help="Normal: 135–145 mEq/L; imbalance affects kidney function")
+    pot = st.number_input("Potassium (mEq/L)", 2.0, 10.0,
+                          help="Normal: 3.5–5.0 mEq/L; abnormal in CKD")
+    hemo = st.number_input("Hemoglobin (g/dL)", 3.0, 17.0,
+                           help="Normal: 12–16 g/dL; low indicates anemia (common in CKD)")
+    pcv = st.number_input("Packed Cell Volume (%)", 20, 60,
+                          help="Normal: 36–50%; indicates red blood cell percentage")
+    wc = st.number_input("White Blood Cell Count (cells/µL)", 2000, 30000,
+                         help="Normal: 4000–11000; high indicates infection or inflammation")
+
+    # Prepare features
     features = np.array([[age, bp, sg, al, su, bgr, sc, sod, pot, hemo, pcv, wc]])
     features = scaler.transform(features)
 
-    model_choice = st.selectbox("Choose Model", list(models.keys()))
+    st.markdown("### 🤖 Choose Prediction Model")
+    model_choice = st.selectbox("Select a Model", list(models.keys()))
 
-    if st.button("Predict"):
+    if st.button("Predict CKD"):
         model = models[model_choice]
         prediction = model.predict(features)[0]
-        result = "CKD Detected" if prediction == 1 else "No CKD"
-        st.success(f"Prediction: {result}")
+        result = "🩸 CKD Detected" if prediction == 1 else "✅ No CKD Detected"
+        st.success(f"Prediction Result: {result}")
 
     st.write("---")
-    st.write("If you’re done, you can logout below:")
     logout_button()
 
 
