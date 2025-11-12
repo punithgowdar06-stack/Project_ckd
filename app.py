@@ -46,9 +46,9 @@ if "logged_in" not in st.session_state:
 if "username" not in st.session_state:
     st.session_state.username = None
 
-# ================================
+# ===============================
 # Helper Functions
-# ================================
+# ===============================
 def signup_page():
     st.title("🆕 Sign Up")
     email = st.text_input("Enter your Email ID")
