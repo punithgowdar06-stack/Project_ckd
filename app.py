@@ -15,6 +15,7 @@ models = {
     "KNN": joblib.load("knn.pkl"),
     "Naive Bayes": joblib.load("naivebayes.pkl")
 }
+
 # ================================
 # File to store user data
 # ================================
@@ -26,7 +27,10 @@ USER_FILE = "users.json"
 def load_users():
     if os.path.exists(USER_FILE):
         with open(USER_FILE, "r") as f:
-            return json.load(f)
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return {}
     else:
         return {}
 
@@ -34,20 +38,19 @@ def save_users(users):
     with open(USER_FILE, "w") as f:
         json.dump(users, f)
 
-# Load users on start
+# Load users globally
 users = load_users()
+
 # ================================
 # Session State Initialization
 # ================================
-if "users" not in st.session_state:
-    st.session_state.users = {}  # {email: password}
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "username" not in st.session_state:
     st.session_state.username = None
 
 # ===============================
-# Helper Functions
+# Authentication Pages
 # ===============================
 def signup_page():
     st.title("🆕 Sign Up")
@@ -55,12 +58,14 @@ def signup_page():
     password = st.text_input("Create Password", type="password")
 
     if st.button("Sign Up"):
-        if email in st.session_state.users:
-            st.warning("⚠️ You already have an account. Please log in directly.")
+        users = load_users()  # Always reload current data
+        if email in users:
+            st.warning("⚠️ Account already exists! Please log in.")
         elif email == "" or password == "":
             st.error("❌ Please fill all fields.")
         else:
-            st.session_state.users[email] = password
+            users[email] = password
+            save_users(users)
             st.success("✅ Account created successfully! Please log in now.")
 
 def login_page():
@@ -69,7 +74,8 @@ def login_page():
     password = st.text_input("Password", type="password")
 
     if st.button("Login"):
-        if email in st.session_state.users and st.session_state.users[email] == password:
+        users = load_users()  # Get the latest stored users
+        if email in users and users[email] == password:
             st.session_state.logged_in = True
             st.session_state.username = email
             st.success(f"✅ Welcome back, {email}!")
@@ -153,42 +159,33 @@ else:
     st.write("### Please enter patient health details below:")
 
     # ----------------------------
-    # Input Fields with Hints
+    # Input Fields
     # ----------------------------
     st.header("📋 Demographic Details")
-    age = st.number_input("🧍 Age (years) [Range: 1 - 100]", min_value=1, max_value=100, value=30)
+    age = st.number_input("🧍 Age (years) [1 - 100]", 1, 100, 30)
     st.caption("✅ Any age (CKD risk increases after 40 years)")
 
     st.header(" Vital Signs")
-    bp = st.number_input("❤️ Blood Pressure (mmHg) [Range: 50 - 180]", min_value=50, max_value=180, value=120)
+    bp = st.number_input("Blood Pressure (mmHg) [50 - 180]", 50, 180, 120)
     st.caption("✅ Normal: 90–120 | ⚠️ High: >140")
 
     st.header("🧪 Urine Test Parameters")
-    sg = st.number_input("⚗️ Specific Gravity [Range: 1.00 - 1.03]", min_value=1.00, max_value=1.03, value=1.02, step=0.001)
-    st.caption("✅ Normal: 1.005–1.025")
-    al = st.number_input("💧 Albumin (g/dL) [Range: 0 - 5]", min_value=0, max_value=5, value=1)
-    st.caption("✅ Normal: 0 | ⚠️ High: >1 indicates protein in urine")
-    su = st.number_input("🍬 Sugar (Urine Glucose Level) [Range: 0 - 5]", min_value=0, max_value=5, value=0)
-    st.caption("✅ Normal: 0 | ⚠️ High: >1 may indicate diabetes")
+    sg = st.number_input("Specific Gravity [1.00 - 1.03]", 1.00, 1.03, 1.02, step=0.001)
+    al = st.number_input("Albumin (g/dL) [0 - 5]", 0, 5, 1)
+    su = st.number_input("Sugar (mg/dL) [0 - 150]", 0, 150, 100)
+    st.caption("✅ Normal: 0–150 mg/dL | ⚠️ High: >150 may indicate diabetes")
 
     st.header("🩸 Blood Test Parameters")
-    bgr = st.number_input("🩸 Blood Glucose Random (mg/dL) [Range: 70 - 490]", min_value=70, max_value=490, value=120)
-    st.caption("✅ Normal: 70–140 | ⚠️ High: >200 may indicate diabetes")
-    sc = st.number_input("🧬 Serum Creatinine (mg/dL) [Range: 0.4 - 15.0]", min_value=0.4, max_value=15.0, value=1.2)
-    st.caption("✅ Normal: 0.6–1.2 | ⚠️ High: >1.5 may indicate kidney damage")
-    sod = st.number_input("🧂 Sodium (mEq/L) [Range: 100 - 150]", min_value=100, max_value=150, value=135)
-    st.caption("✅ Normal: 135–145")
-    pot = st.number_input("🥔 Potassium (mEq/L) [Range: 2.5 - 7.0]", min_value=2.5, max_value=7.0, value=4.5)
-    st.caption("✅ Normal: 3.5–5.5")
-    hemo = st.number_input("🫀 Hemoglobin (g/dL) [Range: 3 - 17]", min_value=3.0, max_value=17.0, value=13.5)
-    st.caption("✅ Normal: 12–17")
-    pcv = st.number_input("🧫 Packed Cell Volume (%) [Range: 20 - 60]", min_value=20, max_value=60, value=40)
-    st.caption("✅ Normal: 35–50")
-    wc = st.number_input("🧪 White Blood Cell Count (cells/cumm) [Range: 2000 - 30000]", min_value=2000, max_value=30000, value=8000)
-    st.caption("✅ Normal: 4000–11000")
+    bgr = st.number_input("Blood Glucose Random (mg/dL) [70 - 490]", 70, 490, 120)
+    sc = st.number_input("Serum Creatinine (mg/dL) [0.4 - 15.0]", 0.4, 15.0, 1.2)
+    sod = st.number_input("Sodium (mEq/L) [100 - 150]", 100, 150, 135)
+    pot = st.number_input("Potassium (mEq/L) [2.5 - 7.0]", 2.5, 7.0, 4.5)
+    hemo = st.number_input("Hemoglobin (g/dL) [3 - 17]", 3.0, 17.0, 13.5)
+    pcv = st.number_input("Packed Cell Volume (%) [20 - 60]", 20, 60, 40)
+    wc = st.number_input("White Blood Cell Count (cells/cumm) [2000 - 30000]", 2000, 30000, 8000)
 
     # ----------------------------
-    # Prediction Section
+    # Prediction
     # ----------------------------
     features = np.array([[age, bp, sg, al, su, bgr, sc, sod, pot, hemo, pcv, wc]])
     features_scaled = scaler.transform(features)
@@ -206,7 +203,6 @@ else:
             st.success("✅ **Prediction: No CKD Detected!**")
             st.subheader("ℹ️ Health Observations:")
 
-        # Show explanation
         reasons = check_abnormalities([age, bp, sg, al, su, bgr, sc, sod, pot, hemo, pcv, wc])
         for msg in reasons:
             st.write(msg)
