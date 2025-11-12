@@ -159,7 +159,7 @@ else:
     age = st.number_input("🧍 Age (years) [Range: 1 - 100]", min_value=1, max_value=100, value=30)
     st.caption("✅ Any age (CKD risk increases after 40 years)")
 
-    st.header("💖 Vital Signs")
+    st.header(" Vital Signs")
     bp = st.number_input("❤️ Blood Pressure (mmHg) [Range: 50 - 180]", min_value=50, max_value=180, value=120)
     st.caption("✅ Normal: 90–120 | ⚠️ High: >140")
 
